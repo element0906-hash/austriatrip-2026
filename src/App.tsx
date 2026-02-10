@@ -56,7 +56,10 @@ if (firebaseConfig && (firebaseConfig.apiKey || typeof __firebase_config !== 'un
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-    if (typeof __app_id !== 'undefined') appId = __app_id;
+    // 修正：確保 appId 不包含特殊字元，避免 Firestore 路徑錯誤
+    if (typeof __app_id !== 'undefined' && __app_id) {
+       appId = __app_id.replace(/[\/.]/g, '_'); 
+    }
   } catch (e) {
     console.error("Firebase init error:", e);
   }
