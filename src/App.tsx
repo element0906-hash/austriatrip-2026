@@ -232,4 +232,33 @@ const App = () => {
                 <div className="space-y-4">{currentDayData.items.map((item:any, idx:number) => <ItineraryCard key={idx} item={item} />)}</div>
                 <div className="mt-8 p-4 bg-[#EFECE6] rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-2"><MapIcon size={18} /><span className="text-sm font-serif">當日景點地圖</span></div>
-                  <a href={`https://www.go
+                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentDayData.title)}`} target="_blank" rel="noreferrer" className="text-xs bg-[#44403C] text-white px-3 py-1 rounded-full flex items-center gap-1">Open <ArrowRight size={12} /></a>
+                </div>
+              </div>
+            </div>
+          )}
+          {view === 'budget' && <BudgetView />}
+          {view === 'info' && (
+            <div className="p-8 space-y-8 animate-fade-in">
+              <div className="bg-[#EFECE6] h-40 rounded-2xl flex items-center justify-center border border-[#E5E3DB]"><Globe size={40} className="text-[#A65D57] opacity-20" /></div>
+              <section className="space-y-4">
+                <h3 className="font-serif border-b pb-2 flex items-center gap-2"><Phone size={18} /> CONTACTS</h3>
+                <div className="bg-[#F2F0E9] p-4 rounded-xl flex justify-between items-center"><span className="font-serif">領隊 邵十立</span><a href="tel:0933991954" className="text-[#A65D57] font-bold">0933-991-954</a></div>
+                <div className="bg-rose-50 p-4 rounded-xl border border-rose-100 flex justify-between items-center"><span className="font-serif text-sm">緊急救助</span><ShieldAlert size={14} className="text-rose-400" /></div>
+              </section>
+              <section className="space-y-4">
+                <h3 className="font-serif border-b pb-2 flex items-center gap-2"><ChevronRight size={18} /> HOTELS</h3>
+                <div className="text-xs text-[#8C8881] space-y-2">
+                  <p>Salzburg: Mercure Salzburg City</p>
+                  <p>Vienna: Andaz Vienna</p>
+                </div>
+              </section>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
