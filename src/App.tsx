@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, query, doc } from 'firebase/firestore';
@@ -20,14 +20,17 @@ import {
   Train, 
   ArrowRight, 
   Map as MapIcon, 
+  ChevronRight, 
   Gem, 
   Plus, 
   Trash2, 
+  Globe, 
+  ShieldAlert,
   Wifi,
   WifiOff
 } from 'lucide-react';
 
-// --- Firebase 標準初始化 ---
+// --- Firebase 設定與初始化 ---
 
 const firebaseConfig = {
   apiKey: "AIzaSyDY6Ss9V08KcokLxJg4xCxhJIYvq-A9AYU",
@@ -39,6 +42,7 @@ const firebaseConfig = {
   measurementId: "G-SCPRFJKMWW"
 };
 
+const appId = 'austria-czech-trip-v1';
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -96,18 +100,29 @@ interface Expense {
 const generate24HourWeather = (baseTemp: number, condition: 'sunny' | 'cloudy' | 'rainy'): HourlyWeather[] => {
   const data: HourlyWeather[] = [];
   const startHour = 8;
+  
   for (let i = 0; i < 24; i += 3) {
     let currentHour = (startHour + i) % 24;
     let timeLabel = `${currentHour.toString().padStart(2, '0')}:00`;
-    let tempAdjust = (currentHour >= 10 && currentHour <= 16) ? 3 : (currentHour >= 0 && currentHour <= 5 ? -4 : 0);
+    let tempAdjust = 0;
+    if (currentHour >= 10 && currentHour <= 16) tempAdjust = 3;
+    else if (currentHour >= 0 && currentHour <= 5) tempAdjust = -4;
+
     let icon = <Sun size={18} className="text-[#A65D57]" />;
     if (condition === 'cloudy') icon = <Cloud size={18} className="text-[#8C8881]" />;
     if (condition === 'rainy') icon = <CloudRain size={18} className="text-[#7A838F]" />;
     if (currentHour >= 18 || currentHour <= 5) icon = <Moon size={18} className="text-[#44403C]" />;
-    data.push({ time: timeLabel, temp: `${baseTemp + tempAdjust}°`, icon });
+
+    data.push({
+      time: timeLabel,
+      temp: `${baseTemp + tempAdjust}°`,
+      icon: icon
+    });
   }
   return data;
 };
+
+// --- 數據資料 ---
 
 const tripData: DayPlan[] = [
   {
@@ -240,11 +255,29 @@ const tripData: DayPlan[] = [
       },
       {
         time: "17:30",
-        title: "契斯科庫倫洛夫",
+        title: "契斯科庫倫洛夫 Český Krumlov",
         category: "transport",
         categoryLabel: "TRANSFER",
         description: "前往南波希米亞的童話小鎮。",
-        location: "Cesky Krumlov"
+        location: "Cesky Krumlov",
+        aiTips: [{ type: 'story', content: '如果時間允許，可在晚餐前先到城堡斗篷橋拍夕陽。' }]
+      },
+      {
+        time: "19:00",
+        title: "中世紀晚宴",
+        category: "food",
+        categoryLabel: "DINNER",
+        description: "庫倫洛夫變裝晚宴。",
+        aiTips: [{ type: 'must-eat', content: '捷克黑啤酒 (Dark Lager)、烤豬腳' }]
+      },
+      {
+        time: "21:00",
+        title: "Hotel OLDINN",
+        category: "hotel",
+        categoryLabel: "HOTEL",
+        location: "Hotel Oldinn",
+        phone: "+420-380-772500",
+        description: "位於古城廣場旁的經典飯店。"
       }
     ]
   },
@@ -259,12 +292,47 @@ const tripData: DayPlan[] = [
     hourlyWeather: generate24HourWeather(5, 'cloudy'),
     items: [
       {
+        time: "07:30",
+        title: "飯店早餐",
+        category: "food",
+        categoryLabel: "BREAKFAST",
+        description: "Hotel OLDINN 自助早餐。",
+      },
+      {
         time: "09:30",
         title: "契斯科庫倫洛夫 Český Krumlov",
         category: "sightseeing",
         categoryLabel: "OLD TOWN",
+        description: "伏爾他瓦河環繞的中世紀小鎮。",
         location: "Cesky Krumlov Castle",
-        aiTips: [{ type: 'must-buy', content: 'Koh-i-noor 刺蝟筆' }]
+        subLocations: ["彩繪塔", "理髮師橋", "舊城廣場"],
+        aiTips: [
+          { type: 'must-buy', content: 'Koh-i-noor 刺蝟筆 (捷克國營鉛筆)' },
+          { type: 'must-eat', content: 'Trdelník (肉桂煙囪捲)' }
+        ]
+      },
+      {
+        time: "14:00",
+        title: "卡羅維瓦利 Karlovy Vary",
+        category: "sightseeing",
+        categoryLabel: "SPA TOWN",
+        description: "著名的溫泉療養聖地。",
+        location: "Karlovy Vary",
+        subLocations: ["磨坊溫泉迴廊", "市場溫泉迴廊"],
+        aiTips: [
+          { type: 'must-eat', content: '溫泉餅 (Oplatky)' },
+          { type: 'must-buy', content: '溫泉杯、貝赫洛夫卡草藥酒' },
+          { type: 'luxury', content: '此處有許多水晶玻璃與瓷器精品店。' }
+        ]
+      },
+      {
+        time: "18:00",
+        title: "Hotel Imperial",
+        category: "hotel",
+        categoryLabel: "HOTEL",
+        location: "Hotel Imperial Karlovy Vary",
+        phone: "+420-353-203113",
+        description: "宏偉的五星級溫泉飯店。"
       }
     ]
   },
@@ -279,11 +347,41 @@ const tripData: DayPlan[] = [
     hourlyWeather: generate24HourWeather(7, 'sunny'),
     items: [
       {
+        time: "07:30",
+        title: "飯店早餐",
+        category: "food",
+        categoryLabel: "BREAKFAST",
+        description: "Hotel Imperial 自助早餐。",
+      },
+      {
+        time: "12:00",
+        title: "伏爾他瓦河遊船 Vltava Cruise",
+        category: "food",
+        categoryLabel: "LUNCH CRUISE",
+        description: "船上享用自助餐，欣賞河岸風光。",
+        location: "Vltava River"
+      },
+      {
         time: "14:30",
         title: "布拉格老城天文鐘 Old Town",
         category: "sightseeing",
         categoryLabel: "CITY TOUR",
-        location: "Old Town Square Prague"
+        description: "布拉格的心臟地帶。",
+        location: "Old Town Square Prague",
+        subLocations: ["舊市政廳", "提恩教堂", "火藥塔"],
+        aiTips: [
+          { type: 'must-buy', content: '菠丹妮 (Botanicus) 手工皂' },
+          { type: 'luxury', content: '巴黎大街：聚集 LV, Dior, Gucci 等一線精品。' }
+        ]
+      },
+      {
+        time: "18:00",
+        title: "Art Nouveau Palace Hotel",
+        category: "hotel",
+        categoryLabel: "HOTEL",
+        location: "Art Nouveau Palace Hotel",
+        phone: "+420-224-093111",
+        description: "新藝術風格設計飯店。"
       }
     ]
   },
@@ -298,11 +396,67 @@ const tripData: DayPlan[] = [
     hourlyWeather: generate24HourWeather(8, 'sunny'),
     items: [
       {
+        time: "07:30",
+        title: "飯店早餐",
+        category: "food",
+        categoryLabel: "BREAKFAST",
+        description: "Art Nouveau Palace 自助早餐。",
+      },
+      {
         time: "09:00",
         title: "布拉格城堡 Prague Castle",
         category: "sightseeing",
         categoryLabel: "CASTLE",
+        description: "世界最大古堡群，歷代國王的住所。",
         location: "Prague Castle"
+      },
+      {
+        time: "10:30",
+        title: "聖維特大教堂 St. Vitus Cathedral",
+        category: "sightseeing",
+        categoryLabel: "CATHEDRAL",
+        description: "哥德式建築的傑作。",
+        location: "St. Vitus Cathedral",
+        aiTips: [{ type: 'story', content: '尋找慕夏 (Mucha) 繪製的彩繪玻璃窗。' }]
+      },
+      {
+        time: "11:30",
+        title: "布拉格黃金巷 Golden Lane",
+        category: "sightseeing",
+        categoryLabel: "HISTORY",
+        description: "色彩繽紛的小屋，曾是煉金術師與卡夫卡的居所。",
+        location: "Golden Lane",
+        aiTips: [
+          { type: 'story', content: '22 號藍色小屋曾是作家卡夫卡的書房。' },
+          { type: 'must-buy', content: '黃金巷內的金屬書籤與錫製士兵。' }
+        ]
+      },
+      {
+        time: "14:00",
+        title: "查理大橋 Charles Bridge",
+        category: "sightseeing",
+        categoryLabel: "LANDMARK",
+        description: "露天的巴洛克雕像博物館。",
+        location: "Charles Bridge",
+        aiTips: [{ type: 'tip', content: '橋上第 8 尊聖約翰雕像，摸底座的浮雕據說會帶來好運。' }]
+      },
+      {
+        time: "16:00",
+        title: "市民會館下午茶 Restaurace Obecní dům",
+        category: "food",
+        categoryLabel: "TEA TIME",
+        description: "優雅的新藝術風格咖啡廳。",
+        location: "Municipal House",
+        aiTips: [{ type: 'must-eat', content: '經典蜂蜜蛋糕 (Medovnik)' }]
+      },
+      {
+        time: "17:30",
+        title: "布拉格老城天文鐘 Old Town",
+        category: "sightseeing",
+        categoryLabel: "CITY CENTER",
+        description: "再次回到舊城廣場感受傍晚氛圍。",
+        location: "Prague Astronomical Clock",
+        aiTips: [{ type: 'must-buy', content: '天文鐘造型冰箱貼' }]
       }
     ]
   },
@@ -317,11 +471,45 @@ const tripData: DayPlan[] = [
     hourlyWeather: generate24HourWeather(10, 'cloudy'),
     items: [
       {
+        time: "07:00",
+        title: "飯店早餐",
+        category: "food",
+        categoryLabel: "BREAKFAST",
+        description: "Art Nouveau Palace 自助早餐。",
+      },
+      {
         time: "10:30",
         title: "特爾奇 Telc",
         category: "sightseeing",
         categoryLabel: "UNESCO",
-        location: "Telč"
+        description: "夢幻的文藝復興風格小鎮。",
+        location: "Telč",
+        aiTips: [{ type: 'story', content: '廣場兩旁的山形牆屋頂，每棟造型都不同。' }]
+      },
+      {
+        time: "15:00",
+        title: "貝爾維第宮 Schloss Belvedere",
+        category: "sightseeing",
+        categoryLabel: "MUSEUM",
+        description: "巴洛克宮殿，欣賞克林姆名畫《吻》。",
+        location: "Belvedere Palace"
+      },
+      {
+        time: "18:30",
+        title: "帽子餐廳",
+        category: "food",
+        categoryLabel: "DINNER",
+        description: "Ribs of Vienna 豬肋排。",
+        aiTips: [{ type: 'must-eat', content: '一公尺長的炭烤豬肋排。' }]
+      },
+      {
+        time: "20:00",
+        title: "Andaz Vienna Am Belvedere",
+        category: "hotel",
+        categoryLabel: "HOTEL",
+        location: "Andaz Vienna Am Belvedere",
+        phone: "+43-1-20577441234",
+        description: "緊鄰美景宮的奢華飯店。"
       }
     ]
   },
@@ -340,6 +528,7 @@ const tripData: DayPlan[] = [
         title: "熊布朗宮 Schloss Schönbrunn",
         category: "sightseeing",
         categoryLabel: "PALACE",
+        description: "哈布斯堡王朝的夏宮。",
         location: "Schönbrunn Palace"
       }
     ]
@@ -359,7 +548,7 @@ const tripData: DayPlan[] = [
         title: "維也納/台北(桃園)",
         category: "flight",
         categoryLabel: "FLIGHT",
-        description: "BR066(長榮航空) 返回台北。"
+        description: "BR066(長榮航空) 返回台北。",
       }
     ]
   },
@@ -384,7 +573,7 @@ const tripData: DayPlan[] = [
   }
 ];
 
-// --- 組件部分 ---
+// --- 介面組件 ---
 
 const Tag = ({ type, content }: { type: string; content: string }) => {
   const styles = {
@@ -394,7 +583,9 @@ const Tag = ({ type, content }: { type: string; content: string }) => {
     'tip': { icon: <Navigation size={10} />, color: 'text-[#A65D57]', bg: 'bg-[#A65D57]/10', label: '貼士' },
     'luxury': { icon: <Gem size={10} />, color: 'text-[#64748B]', bg: 'bg-[#E2E8F0]', label: '精品' },
   };
+
   const style = styles[type as keyof typeof styles] || styles['tip'];
+
   return (
     <div className={`mt-2 flex items-start gap-2 text-xs leading-relaxed text-[#5C5C59] ${style.bg} p-2 rounded-lg`}>
       <span className={`shrink-0 font-bold ${style.color} flex items-center gap-1 uppercase tracking-wider`}>
@@ -417,6 +608,7 @@ const ItineraryCard = ({ item }: { item: ItineraryItem }) => {
       default: return <MapPin size={14} />;
     }
   };
+
   return (
     <div className="relative pl-6 pb-8 last:pb-2 group">
       <div className="absolute left-[7px] top-3 bottom-0 w-[1px] bg-[#E5E3DB] group-last:hidden"></div>
@@ -425,41 +617,77 @@ const ItineraryCard = ({ item }: { item: ItineraryItem }) => {
       </div>
       <div>
         <div className="text-xl font-serif text-[#44403C] tracking-tight mb-2 flex items-center gap-2">
-          {item.time} <div className="h-[1px] bg-[#E5E3DB] flex-1 ml-2"></div>
+          {item.time}
+          <div className="h-[1px] bg-[#E5E3DB] flex-1 ml-2"></div>
         </div>
         <h3 className="text-[#44403C] font-serif text-lg font-medium mb-1">{item.title}</h3>
         <div className="flex items-center gap-1.5 text-[10px] text-[#8C8881] uppercase tracking-[0.15em] mb-3 font-medium">
-          {getCategoryIcon(item.category)} <span>{item.categoryLabel || item.category}</span>
+          {getCategoryIcon(item.category)}
+          <span>{item.categoryLabel || item.category}</span>
         </div>
-        {item.phone && <div className="flex items-center gap-2 text-xs text-[#A65D57] mb-2 font-mono"><Phone size={12} /><a href={`tel:${item.phone}`}>{item.phone}</a></div>}
-        {item.description && <p className="text-[#6E6B65] text-sm leading-relaxed font-light mb-2">{item.description}</p>}
-        {item.aiTips && <div className="space-y-1">{item.aiTips.map((tip, idx) => <Tag key={idx} type={tip.type} content={tip.content} />)}</div>}
+        {item.phone && (
+          <div className="flex items-center gap-2 text-xs text-[#A65D57] mb-2 font-mono">
+            <Phone size={12} />
+            <a href={`tel:${item.phone}`}>{item.phone}</a>
+          </div>
+        )}
+        {item.description && (
+          <p className="text-[#6E6B65] text-sm leading-relaxed font-light mb-2">{item.description}</p>
+        )}
+        {item.subLocations && item.subLocations.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {item.subLocations.map((sub, idx) => (
+              <span key={idx} className="text-[10px] text-[#6E6B65] bg-[#F2F0E9] px-2 py-1 rounded">{sub}</span>
+            ))}
+          </div>
+        )}
+        {item.aiTips && (
+          <div className="space-y-1">
+            {item.aiTips.map((tip, idx) => (
+              <Tag key={idx} type={tip.type} content={tip.content} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 const MapView = ({ locations, currentDayTitle }: { locations: ItineraryItem[], currentDayTitle: string }) => {
-  const queryMap = encodeURIComponent(`${currentDayTitle} austria attractions`);
   return (
     <div className="mt-8 mb-4 border-t border-[#F2F0E9] pt-6">
-      <h4 className="font-serif text-[#44403C] text-lg mb-4 flex items-center gap-2"><MapIcon size={18} /> 當日路徑地圖</h4>
-      <div className="relative w-full h-48 bg-[#EFECE6] rounded-xl overflow-hidden shadow-inner border border-[#E5E3DB]">
-        <iframe
-          title="Google Maps"
-          width="100%"
-          height="100%"
-          style={{ border: 0 }}
-          loading="lazy"
-          allowFullScreen
-          src={`https://www.google.com/maps/embed/v1/search?key=YOUR_API_KEY&q=${queryMap}`}
-        ></iframe>
-        <div className="absolute inset-0 bg-black/5 pointer-events-none flex items-center justify-center">
-            <a href={`https://www.google.com/maps/search/?api=1&query=${queryMap}`} target="_blank" rel="noreferrer" className="bg-[#44403C] text-white px-4 py-2 rounded-full text-xs shadow-lg flex items-center gap-2 pointer-events-auto">
-              開啟 Google Maps <ArrowRight size={14} />
-            </a>
-        </div>
+      <h4 className="font-serif text-[#44403C] text-lg mb-4 flex items-center gap-2">
+        <MapIcon size={18} /> 當日路徑地圖
+      </h4>
+      <div className="relative w-full h-48 bg-[#EFECE6] rounded-xl overflow-hidden shadow-inner border border-[#E5E3DB] flex items-center justify-center group cursor-pointer">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#8C8881 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+        {locations.filter(l => l.location).slice(0, 3).map((loc, idx) => (
+           <div key={idx} className="absolute top-1/2 transform -translate-y-1/2 flex flex-col items-center gap-1" style={{ left: `${20 + idx * 30}%` }}>
+              <div className="w-3 h-3 bg-[#A65D57] rounded-full ring-4 ring-white shadow-md z-10 animate-bounce"></div>
+              <span className="text-[10px] bg-white/80 px-1 rounded text-[#44403C] font-bold shadow-sm whitespace-nowrap">
+                {loc.title.split(' ')[0]}
+              </span>
+           </div>
+        ))}
+        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentDayTitle + ' attractions')}`} target="_blank" rel="noreferrer" className="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity">
+           <span className="bg-[#44403C] text-white px-3 py-1.5 rounded-full text-xs shadow-lg flex items-center gap-1">開啟 Google Maps <ArrowRight size={12} /></span>
+        </a>
       </div>
+    </div>
+  );
+};
+
+const FullTripMap = () => {
+  return (
+    <div className="relative w-full h-56 bg-[#EFECE6] rounded-2xl overflow-hidden shadow-sm border border-[#E5E3DB] mb-8 group">
+      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#A65D57 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+      <div className="absolute top-[30%] left-[45%] flex flex-col items-center">
+        <div className="w-3 h-3 bg-[#A65D57] rounded-full ring-2 ring-white shadow-md"></div>
+        <span className="text-[10px] font-serif font-bold mt-1 text-[#A65D57]">Prague</span>
+      </div>
+      <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="bg-[#44403C] text-white px-4 py-2 rounded-full text-xs shadow-xl flex items-center gap-2">View on Google Maps <ArrowRight size={14} /></span>
+      </a>
     </div>
   );
 };
@@ -476,18 +704,18 @@ const BudgetView = () => {
 
   useEffect(() => {
     signInAnonymously(auth).catch(e => console.error(e));
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
+    const unsubscribeAuth = onAuthStateChanged(auth, setUser);
+    return () => unsubscribeAuth();
   }, []);
 
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, 'expenses'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Expense[];
       setExpenses(data.sort((a, b) => b.timestamp - a.timestamp));
     });
-    return () => unsubscribe();
+    return () => unsubscribeSnapshot();
   }, [user]);
 
   const handleAdd = async () => {
@@ -500,16 +728,20 @@ const BudgetView = () => {
     setItemName(''); setAmountStr('');
   };
 
-  const handleDelete = async (id: string) => { await deleteDoc(doc(db, 'expenses', id)); };
+  const handleDelete = async (id: string) => {
+    await deleteDoc(doc(db, 'expenses', id));
+  };
+
   const totalTwd = expenses.reduce((acc, curr) => acc + curr.twdAmount, 0);
 
   return (
-    <div className="p-8 space-y-8 animate-fade-in">
+    <div className="p-8 animate-fade-in space-y-8">
       <div className="bg-[#44403C] text-[#FDFCF8] p-8 rounded-2xl shadow-xl relative overflow-hidden">
         <p className="text-[#8C8881] text-[10px] uppercase tracking-[0.2em] mb-2">Total Expenses</p>
         <div className="text-4xl font-serif">NT$ {totalTwd.toLocaleString()}</div>
         <div className="mt-2 text-[#8C8881] text-xs flex items-center gap-1">
-          {user ? <Wifi size={10} className="text-green-500" /> : <WifiOff size={10} className="text-red-500" />} {user ? 'Online' : 'Offline'}
+           {user ? <Wifi size={10} className="text-green-500" /> : <WifiOff size={10} className="text-red-500" />}
+           {user ? 'Syncing Online' : 'Offline Mode'}
         </div>
         <Wallet className="absolute right-6 bottom-6 text-[#5C5C59] opacity-30" size={80} strokeWidth={0.5} />
       </div>
@@ -521,11 +753,6 @@ const BudgetView = () => {
             <option value="EUR">€</option><option value="CZK">Kč</option>
           </select>
         </div>
-        <div className="flex gap-2">
-          {['R', 'C', 'N', 'O'].map(p => (
-            <button key={p} onClick={() => setPayer(p as any)} className={`w-10 h-10 rounded-full text-xs font-bold ${payer === p ? 'bg-[#44403C] text-white' : 'bg-[#F2F0E9]'}`}>{p}</button>
-          ))}
-        </div>
         <button onClick={handleAdd} className="w-full bg-[#44403C] text-white py-3 rounded-xl flex items-center justify-center gap-2"><Plus size={16} /> 記一筆</button>
       </div>
       <div className="space-y-3">
@@ -535,96 +762,3 @@ const BudgetView = () => {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${payerColors[ex.payer]}`}>{ex.payer}</div>
               <div><div className="text-[#44403C] font-medium text-sm">{ex.item}</div><div className="text-[10px] text-[#8C8881]">{ex.currency} {ex.amount}</div></div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right font-mono font-bold text-[#A65D57]">NT$ {ex.twdAmount}</div>
-              <button onClick={() => handleDelete(ex.id)} className="text-[#E5E3DB] hover:text-red-400"><Trash2 size={16} /></button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const App = () => {
-  const [view, setView] = useState<'day' | 'budget' | 'info'>('day');
-  const [selectedDay, setSelectedDay] = useState(1);
-  const currentDayData = tripData.find(d => d.day === selectedDay) || tripData[0];
-
-  return (
-    <div className="bg-[#E5E3DB] min-h-screen font-sans text-[#44403C] flex justify-center">
-      <div className="w-full max-w-md bg-[#FDFCF8] min-h-screen shadow-2xl relative flex flex-col">
-        <header className="sticky top-0 z-30 bg-[#FDFCF8]/95 backdrop-blur-sm pt-4 pb-2 border-b border-[#F2F0E9]">
-          <div className="flex overflow-x-auto gap-6 px-6 pb-2 scrollbar-hide">
-            {tripData.map((d) => (
-              <button key={d.day} onClick={() => { setView('day'); setSelectedDay(d.day); }} className="shrink-0 flex flex-col items-center">
-                <span className={`text-[10px] uppercase ${selectedDay === d.day && view === 'day' ? 'text-[#A65D57] font-bold' : 'text-[#C4C2BA]'}`}>{d.dayOfWeek}</span>
-                <span className={`text-xl font-serif ${selectedDay === d.day && view === 'day' ? 'text-[#44403C]' : 'text-[#C4C2BA]'}`}>{d.dateStr}</span>
-              </button>
-            ))}
-            <button onClick={() => setView('budget')} className={`shrink-0 flex flex-col items-center ${view === 'budget' ? 'opacity-100' : 'opacity-40'}`}><Wallet size={18} /><span className="text-[10px]">記帳</span></button>
-            <button onClick={() => setView('info')} className={`shrink-0 flex flex-col items-center ${view === 'info' ? 'opacity-100' : 'opacity-40'}`}><Info size={18} /><span className="text-[10px]">資訊</span></button>
-          </div>
-        </header>
-
-        <main className="flex-1 overflow-y-auto pb-10">
-          {view === 'day' && (
-            <div className="animate-fade-in">
-              <div className="relative h-60 px-4 mt-2">
-                <div className="rounded-2xl overflow-hidden h-full relative">
-                  <img src={currentDayData.imageUrl} className="w-full h-full object-cover" alt="" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                  <div className="absolute bottom-6 left-6 text-white">
-                    <div className="text-[10px] tracking-widest opacity-80 mb-1">DAY {currentDayData.day}</div>
-                    <h2 className="text-3xl font-serif">{currentDayData.title}</h2>
-                  </div>
-                </div>
-              </div>
-              <div className="px-6 pt-6">
-                <div className="flex justify-between items-baseline mb-6">
-                  <h4 className="font-serif text-xl">{currentDayData.locationName}</h4>
-                  <span className="text-[10px] text-[#8C8881] bg-[#F2F0E9] px-2 py-0.5 rounded-full uppercase">Forecast</span>
-                </div>
-                <div className="flex overflow-x-auto gap-6 pb-6 border-b border-[#F2F0E9] mb-8">
-                  {currentDayData.hourlyWeather.map((w, i) => (
-                    <div key={i} className="flex flex-col items-center gap-1 shrink-0">
-                      <span className="text-[10px] text-[#8C8881]">{w.time}</span>
-                      {w.icon}
-                      <span className="text-sm font-serif">{w.temp}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="space-y-4">
-                  {currentDayData.items.map((item, idx) => <ItineraryCard key={idx} item={item} />)}
-                </div>
-                <MapView locations={currentDayData.items} currentDayTitle={currentDayData.title} />
-              </div>
-            </div>
-          )}
-          {view === 'budget' && <BudgetView />}
-          {view === 'info' && (
-            <div className="p-8 space-y-8 animate-fade-in">
-                <h2 className="text-2xl font-serif mb-6">Trip Info</h2>
-                <section className="space-y-4">
-                  <h3 className="font-serif border-b pb-2 flex items-center gap-2"><Phone size={18}/> CONTACTS</h3>
-                  <div className="bg-[#F2F0E9] p-4 rounded-xl flex justify-between items-center">
-                    <span className="font-serif">領隊 邵十立 先生</span>
-                    <a href="tel:0933991954" className="text-[#A65D57] font-bold">0933-991-954</a>
-                  </div>
-                </section>
-                <section className="space-y-4">
-                  <h3 className="font-serif border-b pb-2 flex items-center gap-2"><Plane size={18}/> FLIGHTS</h3>
-                  <div className="text-sm space-y-2">
-                    <div className="flex justify-between"><span>BR065 (TPE-VIE)</span><span className="text-[#8C8881]">23:35-06:45+1</span></div>
-                    <div className="flex justify-between"><span>BR066 (VIE-TPE)</span><span className="text-[#8C8881]">12:05-06:40+1</span></div>
-                  </div>
-                </section>
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
-  );
-};
-
-export default App;
