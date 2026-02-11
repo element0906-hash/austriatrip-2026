@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, query, doc } from 'firebase/firestore';
@@ -20,12 +20,9 @@ import {
   Train, 
   ArrowRight, 
   Map as MapIcon, 
-  ChevronRight, 
   Gem, 
   Plus, 
   Trash2, 
-  Globe, 
-  ShieldAlert,
   Wifi,
   WifiOff
 } from 'lucide-react';
@@ -42,11 +39,9 @@ const firebaseConfig = {
   measurementId: "G-SCPRFJKMWW"
 };
 
-// 初始化 Firebase 實例
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = 'austria-czech-trip-v1';
 
 // --- 類型定義 ---
 
@@ -451,12 +446,13 @@ const MapView = ({ locations, currentDayTitle }: { locations: ItineraryItem[], c
       <h4 className="font-serif text-[#44403C] text-lg mb-4 flex items-center gap-2"><MapIcon size={18} /> 當日路徑地圖</h4>
       <div className="relative w-full h-48 bg-[#EFECE6] rounded-xl overflow-hidden shadow-inner border border-[#E5E3DB]">
         <iframe
+          title="Google Maps"
           width="100%"
           height="100%"
           style={{ border: 0 }}
           loading="lazy"
           allowFullScreen
-          src={`https://www.google.com/maps/embed/v1/search?key=YOUR_GOOGLE_KEY_HERE&q=${queryMap}`}
+          src={`https://www.google.com/maps/embed/v1/search?key=YOUR_API_KEY&q=${queryMap}`}
         ></iframe>
         <div className="absolute inset-0 bg-black/5 pointer-events-none flex items-center justify-center">
             <a href={`https://www.google.com/maps/search/?api=1&query=${queryMap}`} target="_blank" rel="noreferrer" className="bg-[#44403C] text-white px-4 py-2 rounded-full text-xs shadow-lg flex items-center gap-2 pointer-events-auto">
@@ -480,16 +476,18 @@ const BudgetView = () => {
 
   useEffect(() => {
     signInAnonymously(auth).catch(e => console.error(e));
-    return onAuthStateChanged(auth, setUser);
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, 'expenses'));
-    return onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Expense[];
       setExpenses(data.sort((a, b) => b.timestamp - a.timestamp));
     });
+    return () => unsubscribe();
   }, [user]);
 
   const handleAdd = async () => {
