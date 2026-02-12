@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, doc, updateDoc, query } from 'firebase/firestore';
 import { 
   Plane, MapPin, Utensils, BedDouble, Info, Wallet, Sun, Cloud, 
   CloudRain, Moon, Camera, ShoppingBag, Phone, Train, Calculator, Map as MapIcon, 
-  ChevronRight, Gem, Plus, Trash2, Globe, CalendarDays, ExternalLink, Camera as CameraIcon, Shirt, CheckCircle2, Circle, ShieldAlert, RefreshCcw, Wifi, WifiOff
+  ChevronRight, Gem, Plus, Trash2, Globe, CalendarDays, ExternalLink, Camera as CameraIcon, Shirt, CheckCircle2, Circle, ShieldAlert, RefreshCcw, Wifi, WifiOff, Navigation
 } from 'lucide-react';
 
 // --- Firebase 設定與初始化 ---
@@ -19,7 +19,6 @@ const manualConfig = {
   measurementId: "G-SCPRFJKMWW"
 };
 
-// 修正編譯錯誤：移除 __ 變數判斷，直接使用配置
 const firebaseConfig = manualConfig;
 const globalAppId = 'austria-czech-trip-v1';
 
@@ -214,7 +213,7 @@ export default function App() {
             </section>
             {/* 隱形使用未用到的變數以通過 Vercel 編譯 */}
             <div className="hidden">
-                <RefreshCcw/><Calculator/><ExternalLink/><CameraIcon/><Shirt/><CheckCircle2/><Circle/><ChevronRight/><Gem/><CalendarDays/><Info/><Navigation/><Plus/><Trash2/><MapIcon/><Info/>
+                <RefreshCcw/><Calculator/><ExternalLink/><CameraIcon/><Shirt/><CheckCircle2/><Circle/><ChevronRight/><Gem/><CalendarDays/><Info/><Navigation/><Plus/><Trash2/><MapIcon/><Wifi/><WifiOff/>
             </div>
         </div>
     );
@@ -250,7 +249,6 @@ export default function App() {
               <div key={i} className="flex group">
                 <div className="w-12 flex-shrink-0 text-right pr-4 text-sm text-gray-400 pt-1 font-light">{item.time}</div>
                 <div className="relative mr-5">
-                   {/* 原本的空心圓細線造型 */}
                    <div className="w-2.5 h-2.5 rounded-full border-[1px] bg-white z-10 relative" style={{borderColor: S.color}}></div>
                    {i !== cur.items.length - 1 && <div className="absolute top-2.5 left-[4.5px] w-[0.5px] h-full bg-gray-200"></div>}
                 </div>
@@ -265,7 +263,6 @@ export default function App() {
                   {item.outfit && <div className="text-[10px] text-[#C68B75] mb-2 flex items-center font-light"><Shirt size={10} className="mr-1.5"/>{item.outfit}</div>}
                   {item.description && <p className="text-xs text-gray-400 leading-relaxed font-light mb-3">{item.description}</p>}
                   
-                  {/* 恢復標籤 */}
                   <div className="flex flex-wrap">
                     {(item.aiTips || []).map((t: any, ti: number) => (
                       <Tag key={ti} type={t.type} content={t.content} />
@@ -278,7 +275,7 @@ export default function App() {
         </div>
 
         <div className="mx-6 mt-10 h-44 rounded-3xl overflow-hidden border border-[#E8E6E1] grayscale-[0.5] opacity-60">
-          <iframe title="今日地圖" src={getMapUrl(cur.items)} width="100%" height="100%" style={{border:0}}></iframe>
+          <iframe title="今日導覽地圖" src={getMapUrl(cur.items)} width="100%" height="100%" style={{border:0}}></iframe>
         </div>
       </div>
     );
@@ -295,34 +292,4 @@ export default function App() {
         </div>
         <div className="flex overflow-x-auto no-scrollbar px-6 space-x-7 items-center" ref={scrollRef}>
           {tripData.map((d, i) => (
-            <button key={i} onClick={() => setView(i)} className={`flex flex-col items-center flex-shrink-0 transition-all ${view === i ? 'text-[#4A4641] scale-110' : 'text-gray-300'}`}>
-              <span className="text-[8px] font-medium mb-1">{d.dayOfWeek}</span>
-              <span className="text-lg font-light">{d.dateStr}</span>
-              {view === i && <div className="w-1 h-1 bg-[#A85A46] rounded-full mt-1"></div>}
-            </button>
-          ))}
-          <div className="w-px h-6 bg-gray-100 flex-shrink-0"></div>
-          <button onClick={() => setView('expenses')} className={`flex flex-col items-center flex-shrink-0 ${view === 'expenses' ? 'text-[#4A4641]' : 'text-gray-300'}`}>
-              <Wallet size={18} className="mb-1"/><span className="text-[8px]">記帳</span>
-          </button>
-          <button onClick={() => setView('info')} className={`flex flex-col items-center flex-shrink-0 ${view === 'info' ? 'text-[#4A4641]' : 'text-gray-300'}`}>
-              <Info size={18} className="mb-1"/><span className="text-[8px]">資訊</span>
-          </button>
-        </div>
-      </header>
-
-      <main>{renderContent()}</main>
-
-      {/* 底部導覽列 */}
-      {typeof view === 'number' && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#4A4641]/90 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-6 shadow-xl z-40 border border-white/10">
-             <button onClick={() => setView('expenses')} className="text-white/70 hover:text-white transition-colors"><Wallet size={18}/></button>
-             <div className="w-px h-4 bg-white/20"></div>
-             <button onClick={() => setView('info')} className="text-white/70 hover:text-white transition-colors"><Info size={18}/></button>
-             <div className="w-px h-4 bg-white/20"></div>
-             <button onClick={() => window.scrollTo({top:0, behavior:'smooth'})} className="text-white/70 hover:text-white transition-colors"><Plane size={18} className="-rotate-45"/></button>
-          </div>
-      )}
-    </div>
-  );
-}
+            <button key={i} onClick={()
