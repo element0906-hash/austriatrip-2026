@@ -8,7 +8,7 @@ import {
   ChevronRight, Gem, Plus, Trash2, Globe, CalendarDays, ExternalLink, Camera as CameraIcon, Shirt, CheckCircle2, Circle, ShieldAlert, RefreshCcw, Wifi, WifiOff, Navigation
 } from 'lucide-react';
 
-// --- Firebase 設定與初始化 ---
+// --- Firebase 設定 ---
 const manualConfig = {
   apiKey: "AIzaSyDY6Ss9V08KcokLxJg4xCxhJIYvq-A9AYU",
   authDomain: "austriatravel-2026.firebaseapp.com",
@@ -20,13 +20,12 @@ const manualConfig = {
 };
 
 const firebaseConfig = manualConfig;
-const globalAppId = 'austria-czech-trip-v1'; // 修正：將此變數用於資料庫路徑
-
+const globalAppId = 'austria-czech-trip-v1';
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// --- 莫蘭迪色系主題 ---
+// --- 莫蘭迪配色 ---
 const themeColors = {
   bg: '#F5F3F0', 
   textMain: '#4A4641', 
@@ -50,7 +49,6 @@ const payersInfo: any = {
   'O': { id: 'O', color: 'bg-[#C28F70] text-white' }  
 };
 
-// --- 模擬預報 ---
 const generate24HourWeather = (baseTemp: number, condition: string) => {
   const data = [];
   const currentHour = new Date().getHours();
@@ -78,7 +76,6 @@ const tripData = [
   { day: 10, dateStr: "06", dayOfWeek: "FRI", title: "抵達台北", locationName: "Taipei", imageUrl: "https://images.unsplash.com/photo-1470004914212-05527e49370b?q=80&w=2074&auto=format&fit=crop", hourlyWeather: generate24HourWeather(25, 'sunny'), items: [{ time: "06:40", title: "抵達桃園機場", category: "transport" }] }
 ];
 
-// --- 標籤組件 ---
 const Tag = ({ type, content }: { type: string; content: string }) => {
   const tagStyles: any = {
     'must-eat': { color: '#C28F70', label: '必吃', icon: <Utensils size={10} /> }, 
@@ -102,29 +99,24 @@ const getMapUrl = (items: any[]) => {
   return `https://maps.google.com/maps?q=${q}&output=embed`;
 };
 
-// --- 功能頁面 ---
 const ExpenseTracker = ({ user }: { user: any }) => {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [item, setItem] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('EUR');
   const [payer, setPayer] = useState('R');
-  
   useEffect(() => {
     if (!user) return;
-    // 使用 globalAppId 以滿足編譯檢查
     const qry = query(collection(db, 'artifacts', globalAppId, 'expenses'));
     return onSnapshot(qry, (snap) => {
       setExpenses(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a:any, b:any) => b.timestamp - a.timestamp));
     });
   }, [user]);
-
   const addExp = async () => {
     if (!item || !amount) return;
     await addDoc(collection(db, 'artifacts', globalAppId, 'expenses'), { item, amount: parseFloat(amount), currency, twdAmount: Math.round(parseFloat(amount) * (currency === 'EUR' ? 34.2 : 1.45)), payer, timestamp: Date.now(), date: new Date().toLocaleDateString() });
     setItem(''); setAmount('');
   };
-
   return (
     <div className="p-6 pb-24 animate-fade-in text-[#4A4641] font-light">
       <div className="mb-8">
@@ -160,17 +152,14 @@ const ExpenseTracker = ({ user }: { user: any }) => {
   );
 };
 
-// --- 主介面 ---
 export default function App() {
   const [view, setView] = useState<any>(0);
   const [user, setUser] = useState<any>(null);
   const scrollRef = useRef<any>(null);
-
   useEffect(() => {
     signInAnonymously(auth).catch(console.error);
     return onAuthStateChanged(auth, setUser);
   }, []);
-
   const renderContent = () => {
     if (view === 'expenses') return <ExpenseTracker user={user} />;
     if (view === 'info') return (
@@ -180,7 +169,7 @@ export default function App() {
                 <h3 className="text-xs tracking-[0.2em] text-gray-400 border-b pb-2 flex items-center gap-2 font-light"><Phone size={14}/> 重要聯絡</h3>
                 <div className="flex justify-between items-center bg-white p-5 rounded-2xl border border-[#E8E6E1]">
                     <span className="text-sm font-light">領隊 邵十立 先生</span>
-                    <a href="tel:0933991954" className="text-sm font-light text-[#A85A46]">0933-991-954</a>
+                    <a href="tel:0933991954" className="text-sm font-medium text-[#A85A46]">0933-991-954</a>
                 </div>
                 <div className="flex justify-between items-center bg-rose-50/30 p-5 rounded-2xl border border-rose-100"><span className="text-sm font-light text-rose-800">外交部緊急助救</span><ShieldAlert size={16} className="text-rose-400"/></div>
             </section>
@@ -189,10 +178,9 @@ export default function App() {
             </div>
         </div>
     );
-    
     const cur = tripData.find(d => d.day === (view + 1)) || tripData[0];
     return (
-      <div className="animate-fade-in pb-20 font-light">
+      <div className="animate-fade-in pb-20 font-light text-[#4A4641]">
         <div className="relative mx-5 mt-5 h-64 rounded-[2rem] overflow-hidden shadow-sm">
           <img src={cur.imageUrl} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
@@ -201,7 +189,6 @@ export default function App() {
             <h2 className="text-2xl font-light tracking-wide">{cur.title}</h2>
           </div>
         </div>
-        
         <div className="mt-8 px-8">
           <div className="flex space-x-6 overflow-x-auto no-scrollbar pb-2">
             {cur.hourlyWeather.slice(0, 8).map((hw, i) => (
@@ -213,6 +200,59 @@ export default function App() {
             ))}
           </div>
         </div>
-
         <div className="px-8 mt-10 space-y-10">
-          {cur.items.map((it
+          {cur.items.map((item: any, i: number) => {
+            const S = categoryStyles[item.category] || categoryStyles.sightseeing;
+            return (
+              <div key={i} className="flex">
+                <div className="w-12 flex-shrink-0 text-right pr-4 text-sm text-gray-400 pt-1 font-light">{item.time}</div>
+                <div className="relative mr-5">
+                   <div className="w-2.5 h-2.5 rounded-full border-[1px] bg-white z-10 relative" style={{borderColor: S.color}}></div>
+                   {i !== cur.items.length - 1 && <div className="absolute top-2.5 left-[4.5px] w-[0.5px] h-full bg-gray-200"></div>}
+                </div>
+                <div className="flex-1 pb-2">
+                  <h4 className="text-base font-light text-[#4A4641] flex items-center gap-2 mb-1">
+                    {item.title}
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title)}`} target="_blank" rel="noreferrer" className="text-gray-300"><MapPin size={12}/></a>
+                  </h4>
+                  <div className="text-[9px] tracking-widest flex items-center mb-2 font-light" style={{color: S.color}}>
+                    <S.icon size={10} className="mr-1.5"/>{S.label}
+                  </div>
+                  {item.description && <p className="text-xs text-gray-400 leading-relaxed font-light mb-3">{item.description}</p>}
+                  <div className="flex flex-wrap">{(item.aiTips || []).map((t: any, ti: number) => (<Tag key={ti} type={t.type} content={t.content} />))}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mx-6 mt-10 h-44 rounded-3xl overflow-hidden border border-[#E8E6E1] grayscale-[0.5] opacity-60">
+          <iframe title="今日導引" src={getMapUrl(cur.items)} width="100%" height="100%" style={{border:0}}></iframe>
+        </div>
+      </div>
+    );
+  };
+  return (
+    <div className="max-w-md mx-auto min-h-screen relative shadow-2xl overflow-hidden font-sans font-light text-[#4A4641]" style={{ backgroundColor: themeColors.bg }}>
+      <style dangerouslySetInnerHTML={{ __html: `.no-scrollbar::-webkit-scrollbar { display: none; } .animate-fade-in { animation: f 0.6s ease-out; } @keyframes f { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }` }} />
+      <header className="sticky top-0 z-30 bg-[#F5F3F0]/90 backdrop-blur-md border-b border-gray-100 pb-2 pt-10">
+        <div className="text-center mb-5">
+            <h1 className="text-[9px] tracking-[0.4em] text-gray-400 uppercase font-light">Family Trip 2026</h1>
+            <div className="text-xl font-light tracking-widest text-[#4A4641] mt-1">奧捷旅行</div>
+        </div>
+        <div className="flex overflow-x-auto no-scrollbar px-6 space-x-7 items-center" ref={scrollRef}>
+          {tripData.map((d, i) => (
+            <button key={i} onClick={() => setView(i)} className={`flex flex-col items-center flex-shrink-0 transition-all ${view === i ? 'text-[#4A4641] scale-110' : 'text-gray-300'}`}>
+              <span className="text-[8px] font-light mb-1">{d.dayOfWeek}</span>
+              <span className="text-lg font-light">{d.dateStr}</span>
+              {view === i && <div className="w-1 h-1 bg-[#A85A46] rounded-full mt-1"></div>}
+            </button>
+          ))}
+          <div className="w-px h-6 bg-gray-100 flex-shrink-0"></div>
+          <button onClick={() => setView('expenses')} className={`flex flex-col items-center flex-shrink-0 ${view === 'expenses' ? 'text-[#4A4641]' : 'text-gray-300'}`}><Wallet size={18} className="mb-1"/><span className="text-[8px] font-light">記帳</span></button>
+          <button onClick={() => setView('info')} className={`flex flex-col items-center flex-shrink-0 ${view === 'info' ? 'text-[#4A4641]' : 'text-gray-300'}`}><Info size={18} className="mb-1"/><span className="text-[8px] font-light">資訊</span></button>
+        </div>
+      </header>
+      <main>{renderContent()}</main>
+    </div>
+  );
+}
