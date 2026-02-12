@@ -16,11 +16,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <title>奧捷之旅 2026</title>
-      <script>
-  // 從環境變數中抓取並注入到全域視窗物件
-  window.__firebase_config = "%REACT_APP_FIREBASE_CONFIG%";
+<script>
+  // 嘗試直接將值注入，不加額外的引號
+  window.__firebase_config = `%REACT_APP_FIREBASE_CONFIG%`;
+  
+  // 加上這行除錯，這樣你在部署後看 Console 就能立刻知道有沒有抓到
+  console.log("Debug - Raw Config:", window.__firebase_config);
 </script>
-
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -28,4 +30,5 @@
   </body>
   
 </html>
+
 
