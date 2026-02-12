@@ -1,5 +1,12 @@
 {
   "compilerOptions": {
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "strict": false,
+    "checkJs": false,
+    "allowJs": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
 "noImplicitAny": false,
     "suppressImplicitAnyIndexErrors": true,
     "strict": false,
