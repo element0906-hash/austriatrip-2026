@@ -1,20 +1,22 @@
 {
-  "short_name": "奧捷之旅",
-  "name": "2026 奧捷 10 日遊助手",
-     "icons": [
+  "short_name": "AustriaTravel",
+  "name": "Austria & Czech Travel App",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
     {
       "src": "logo192.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "sizes": "192x192"
     },
     {
       "src": "logo512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#E5E3DB",
-  "background_color": "#FDFCF8"
+  ...
 }
