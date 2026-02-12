@@ -1,5 +1,10 @@
 // src/globals.d.ts
 
-// 這行程式碼告訴 TypeScript：有一個全域變數叫做 __firebase_config
-// 它的型別是 string，請不要在編譯時報錯。
+// 1. 解決 __firebase_config 找不到的問題
 declare const __firebase_config: string;
+
+// 2. 解決 app, auth, db 隱含 any 的問題
+// 我們在全域命名空間中宣告這些變數的型別
+declare var app: any;
+declare var auth: any;
+declare var db: any;
