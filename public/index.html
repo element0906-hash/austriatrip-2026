@@ -10,25 +10,36 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3125/3125848.png">
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png">
     
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <script src="https://cdn.tailwindcss.com"></script>
     
     <title>奧捷之旅 2026</title>
-<script>
-  // 嘗試直接將值注入，不加額外的引號
-  window.__firebase_config = `%REACT_APP_FIREBASE_CONFIG%`;
-  
-  // 加上這行除錯，這樣你在部署後看 Console 就能立刻知道有沒有抓到
-  console.log("Debug - Raw Config:", window.__firebase_config);
-</script>
+
+    <script>
+      (function() {
+        try {
+          // 1. 抓取佔位符的值
+          var rawConfig = `%REACT_APP_FIREBASE_CONFIG%`;
+          
+          // 2. 檢查：只有當它被替換成以 { 開頭的 JSON 字串時才注入
+          if (rawConfig && rawConfig.indexOf('{') === 0) {
+            window.__firebase_config = rawConfig;
+            console.log("✅ Firebase Config 注入成功");
+          } else {
+            console.warn("⚠️ Firebase Config 尚未設定或格式不正確 (目前值: " + rawConfig + ")");
+            // 為了防止主程式報錯，給一個空的字串或物件
+            window.__firebase_config = undefined; 
+          }
+        } catch (e) {
+          console.error("❌ Config injection failed:", e);
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
   </body>
-  
 </html>
-
-
