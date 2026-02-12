@@ -16,9 +16,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <title>奧捷之旅 2026</title>
+      <script>
+  // 從環境變數中抓取並注入到全域視窗物件
+  window.__firebase_config = "%REACT_APP_FIREBASE_CONFIG%";
+</script>
+
+
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
   </body>
+  
 </html>
