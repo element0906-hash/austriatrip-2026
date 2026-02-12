@@ -4,8 +4,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { 
   Plane, MapPin, Utensils, BedDouble, Info, Wallet, Sun, Cloud, 
-  CloudRain, Moon, Camera, ShoppingBag, Phone, Train, Map as MapIcon, 
-  ChevronRight, Gem, Plus, Trash2, Globe, Shirt, CheckCircle2, Circle
+  CloudRain, Moon, Camera, ShoppingBag, Train, Plus, Trash2, Shirt, CheckCircle2, Circle
 } from 'lucide-react';
 
 // --- Firebase 設定與初始化 ---
@@ -19,7 +18,6 @@ const manualConfig = {
   measurementId: "G-SCPRFJKMWW"
 };
 
-// 修正：直接使用 manualConfig，移除 Vercel 不認識的 __ 變數
 const firebaseConfig = manualConfig;
 const globalAppId = 'austria-czech-trip-v1';
 
@@ -57,7 +55,7 @@ const payersInfo: any = {
   'O': { id: 'O', color: 'bg-[#C28F70] text-white' }  // Oliver
 };
 
-// --- 模擬數據 ---
+// --- 模擬數據生成 ---
 const generate24HourWeather = (baseTemp: number, condition: string) => {
   const data = [];
   const currentHour = new Date().getHours();
@@ -363,7 +361,7 @@ const InfoPage = () => {
         <div className="border-t pt-4"><div className="text-xs text-[#8C8881]">緊急救助</div><div className="font-bold">奧地利處</div><div className="text-[#A85A46]">+43-664-345-0455</div></div>
       </div>
       <div className="bg-white p-2 rounded-xl border border-[#E8E6E1] h-80 overflow-hidden">
-        <iframe src={getMapUrl(ov)} width="100%" height="100%" style={{border:0, opacity:0.7}}></iframe>
+        <iframe title="總覽地圖" src={getMapUrl(ov)} width="100%" height="100%" style={{border:0, opacity:0.7}}></iframe>
       </div>
     </div>
   );
@@ -416,18 +414,13 @@ export default function App() {
                   <div className="text-[10px] flex items-center mt-1" style={{color: S.color}}><S.icon size={10} className="mr-1"/>{S.label}</div>
                   {item.outfit && <div className="text-[11px] text-[#C68B75] mt-2 flex items-center"><Shirt size={10} className="mr-1"/>{item.outfit}</div>}
                   <p className="text-sm text-gray-500 mt-2">{item.description}</p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {(item.aiTips || []).map((t: any, ti: number) => (
-                      <span key={ti} className="text-[9px] px-1.5 py-0.5 rounded border" style={{borderColor: themeColors.accentClay}}>{t.content}</span>
-                    ))}
-                  </div>
                 </div>
               </div>
             );
           })}
         </div>
         <div className="mx-4 mt-8 h-48 rounded-xl overflow-hidden grayscale opacity-70">
-          <iframe src={getMapUrl(cur.items)} width="100%" height="100%" style={{border:0}}></iframe>
+          <iframe title="每日地圖" src={getMapUrl(cur.items)} width="100%" height="100%" style={{border:0}}></iframe>
         </div>
       </div>
     );
