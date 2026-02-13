@@ -2,10 +2,19 @@
   "short_name": "奧捷之旅",
   "name": "2026 奧捷 10 日遊助手",
   "icons": [
-    ...
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
   ],
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#E5E3DB",
   "background_color": "#FDFCF8"
-} // <--- 確保最後一個大括號存在且前面沒有多餘的逗號
+}
